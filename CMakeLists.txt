@@ -166,6 +166,20 @@ else()
 endif()
 
 ########################################################################
+# Language support
+########################################################################
+set(ENABLE_LANGUAGE "en" CACHE STRING "Language for user-facing messages")
+set_property(CACHE ENABLE_LANGUAGE PROPERTY STRINGS en tr)
+if(ENABLE_LANGUAGE STREQUAL "tr")
+    message(STATUS "Building with Turkish language support")
+    ADD_DEFINITIONS(-DRTL_433_LANG_TR)
+elseif(ENABLE_LANGUAGE STREQUAL "en")
+    message(STATUS "Building with English language support (default)")
+else()
+    message(FATAL_ERROR "Unsupported language: ${ENABLE_LANGUAGE}. Use 'en' or 'tr'")
+endif()
+
+########################################################################
 # Find Threads support build dependencies
 ########################################################################
 set(ENABLE_THREADS AUTO CACHE STRING "Enable Threads support")

@@ -54,6 +54,7 @@
 #include "fatal.h"
 #include "write_sigrok.h"
 #include "mongoose.h"
+#include "i18n.h"
 
 #ifdef _WIN32
 #include <io.h>
@@ -133,66 +134,109 @@ _Noreturn
 static void usage(int exit_code)
 {
     term_help_fprintf(exit_code ? stderr : stdout,
-            "Generic RF data receiver and decoder for ISM band devices using RTL-SDR and SoapySDR.\n"
+            I18N("Generic RF data receiver and decoder for ISM band devices using RTL-SDR and SoapySDR.\n"
             "Full documentation is available at https://triq.org/\n"
-            "\nUsage:\n"
+            "\nUsage:\n",
+            "ISM band cihazları için RTL-SDR ve SoapySDR kullanan genel RF veri alıcısı ve kod çözücü.\n"
+            "Tam belgeler https://triq.org/ adresinde mevcuttur\n"
+            "\nKullanım:\n")
 #ifdef _WIN32
-            "  A \"rtl_433.conf\" file is searched in the current dir, %%LocalAppData%%, %%ProgramData%%,\n"
+            I18N("  A \"rtl_433.conf\" file is searched in the current dir, %%LocalAppData%%, %%ProgramData%%,\n"
             "  e.g. \"C:\\Users\\username\\AppData\\Local\\rtl_433\\\", \"C:\\ProgramData\\rtl_433\\\",\n"
-            "  then command line args will be parsed in order.\n"
+            "  then command line args will be parsed in order.\n",
+            "  \"rtl_433.conf\" dosyası şu dizinlerde aranır: mevcut dizin, %%LocalAppData%%, %%ProgramData%%,\n"
+            "  örn. \"C:\\Users\\kullanici\\AppData\\Local\\rtl_433\\\", \"C:\\ProgramData\\rtl_433\\\",\n"
+            "  ardından komut satırı argümanları sırayla işlenir.\n")
 #else
-            "  A \"rtl_433.conf\" file is searched in \"./\", XDG_CONFIG_HOME e.g. \"$HOME/.config/rtl_433/\",\n"
-            "  SYSCONFDIR e.g. \"/usr/local/etc/rtl_433/\", then command line args will be parsed in order.\n"
+            I18N("  A \"rtl_433.conf\" file is searched in \"./\", XDG_CONFIG_HOME e.g. \"$HOME/.config/rtl_433/\",\n"
+            "  SYSCONFDIR e.g. \"/usr/local/etc/rtl_433/\", then command line args will be parsed in order.\n",
+            "  \"rtl_433.conf\" dosyası \"./\", XDG_CONFIG_HOME örn. \"$HOME/.config/rtl_433/\",\n"
+            "  SYSCONFDIR örn. \"/usr/local/etc/rtl_433/\" dizinlerinde aranır, ardından komut satırı argümanları sırayla işlenir.\n")
 #endif
-            "\t\t= General options =\n"
-            "  [-V] Output the version string and exit\n"
-            "  [-v] Increase verbosity (can be used multiple times).\n"
-            "       -v : verbose notice, -vv : verbose info, -vvv : debug, -vvvv : trace.\n"
-            "  [-c <path>] Read config options from a file\n"
-            "\t\t= Tuner options =\n"
-            "  [-d <RTL-SDR USB device index> | :<RTL-SDR USB device serial> | <SoapySDR device query> | rtl_tcp | help]\n"
-            "  [-g <gain> | help] (default: auto)\n"
-            "  [-t <settings>] apply a list of keyword=value settings to the SDR device\n"
+            I18N("\t\t= General options =\n", "\t\t= Genel seçenekler =\n")
+            I18N("  [-V] Output the version string and exit\n", "  [-V] Sürüm bilgisini yazdır ve çık\n")
+            I18N("  [-v] Increase verbosity (can be used multiple times).\n"
+            "       -v : verbose notice, -vv : verbose info, -vvv : debug, -vvvv : trace.\n",
+            "  [-v] Ayrıntı seviyesini artır (birden fazla kullanılabilir).\n"
+            "       -v : ayrıntılı notice, -vv : ayrıntılı info, -vvv : debug, -vvvv : trace.\n")
+            I18N("  [-c <path>] Read config options from a file\n", "  [-c <yol>] Yapılandırma seçeneklerini bir dosyadan oku\n")
+            I18N("\t\t= Tuner options =\n", "\t\t= Alıcı seçenekleri =\n")
+            I18N("  [-d <RTL-SDR USB device index> | :<RTL-SDR USB device serial> | <SoapySDR device query> | rtl_tcp | help]\n",
+            "  [-d <RTL-SDR USB cihaz indeksi> | :<RTL-SDR USB cihaz seri numarası> | <SoapySDR cihaz sorgusu> | rtl_tcp | help]\n")
+            I18N("  [-g <gain> | help] (default: auto)\n", "  [-g <gain> | help] (varsayılan: auto)\n")
+            I18N("  [-t <settings>] apply a list of keyword=value settings to the SDR device\n"
             "       e.g. for SoapySDR -t \"antenna=A,bandwidth=4.5M,rfnotch_ctrl=false\"\n"
-            "       for RTL-SDR use \"direct_samp[=1]\", \"offset_tune[=1]\", \"digital_agc[=1]\", \"biastee[=1]\"\n"
-            "  [-f <frequency>] Receive frequency(s) (default: %d Hz)\n"
-            "  [-H <seconds>] Hop interval for polling of multiple frequencies (default: %d seconds)\n"
-            "  [-p <ppm_error>] Correct rtl-sdr tuner frequency offset error (default: 0)\n"
-            "  [-s <sample rate>] Set sample rate (default: %d Hz)\n"
-            "  [-D quit | restart | pause | manual] Input device run mode options (default: quit).\n"
-            "\t\t= Demodulator options =\n"
-            "  [-R <device> | help] Enable only the specified device decoding protocol (can be used multiple times)\n"
-            "       Specify a negative number to disable a device decoding protocol (can be used multiple times)\n"
-            "  [-X <spec> | help] Add a general purpose decoder (prepend -R 0 to disable all decoders)\n"
-            "  [-Y auto | classic | minmax] FSK pulse detector mode.\n"
-            "  [-Y level=<dB level>] Manual detection level used to determine pulses (-1.0 to -30.0) (0=auto).\n"
-            "  [-Y minlevel=<dB level>] Manual minimum detection level used to determine pulses (-1.0 to -99.0).\n"
-            "  [-Y minsnr=<dB level>] Minimum SNR to determine pulses (1.0 to 99.0).\n"
-            "  [-Y autolevel] Set minlevel automatically based on average estimated noise.\n"
-            "  [-Y squelch] Skip frames below estimated noise level to reduce cpu load.\n"
-            "  [-Y ampest | magest] Choose amplitude or magnitude level estimator.\n"
-            "\t\t= Analyze/Debug options =\n"
-            "  [-A] Pulse Analyzer. Enable pulse analysis and decode attempt.\n"
-            "       Disable all decoders with -R 0 if you want analyzer output only.\n"
-            "  [-y <code>] Verify decoding of demodulated test data (e.g. \"{25}fb2dd58\") with enabled devices\n"
-            "\t\t= File I/O options =\n"
-            "  [-S none | all | unknown | known] Signal auto save. Creates one file per signal.\n"
-            "       Note: Saves raw I/Q samples (uint8 pcm, 2 channel). Preferred mode for generating test files.\n"
-            "  [-r <filename> | help] Read data from input file instead of a receiver\n"
-            "  [-w <filename> | help] Save data stream to output file (a '-' dumps samples to stdout)\n"
-            "  [-W <filename> | help] Save data stream to output file, overwrite existing file\n"
-            "\t\t= Data output options =\n"
-            "  [-F log | kv | json | csv | mqtt | influx | syslog | trigger | rtl_tcp | http | null | help] Produce decoded output in given format.\n"
+            "       for RTL-SDR use \"direct_samp[=1]\", \"offset_tune[=1]\", \"digital_agc[=1]\", \"biastee[=1]\"\n",
+            "  [-t <ayarlar>] SDR cihazına anahtar=değer ayarları listesi uygula\n"
+            "       örn. SoapySDR için -t \"antenna=A,bandwidth=4.5M,rfnotch_ctrl=false\"\n"
+            "       RTL-SDR için \"direct_samp[=1]\", \"offset_tune[=1]\", \"digital_agc[=1]\", \"biastee[=1]\" kullanın\n")
+            I18N("  [-f <frequency>] Receive frequency(s) (default: %d Hz)\n", "  [-f <frekans>] Alma frekansı (varsayılan: %d Hz)\n")
+            I18N("  [-H <seconds>] Hop interval for polling of multiple frequencies (default: %d seconds)\n", "  [-H <saniye>] Çoklu frekans yoklama için atlama aralığı (varsayılan: %d saniye)\n")
+            I18N("  [-p <ppm_error>] Correct rtl-sdr tuner frequency offset error (default: 0)\n", "  [-p <ppm_hatası>] rtl-sdr alıcı frekans ofset hatasını düzelt (varsayılan: 0)\n")
+            I18N("  [-s <sample rate>] Set sample rate (default: %d Hz)\n", "  [-s <örnekleme hızı>] Örnekleme hızını ayarla (varsayılan: %d Hz)\n")
+            I18N("  [-D quit | restart | pause | manual] Input device run mode options (default: quit).\n",
+            "  [-D quit | restart | pause | manual] Giriş cihazı çalıştırma modu seçenekleri (varsayılan: quit).\n")
+            I18N("\t\t= Demodulator options =\n", "\t\t= Demodülatör seçenekleri =\n")
+            I18N("  [-R <device> | help] Enable only the specified device decoding protocol (can be used multiple times)\n"
+            "       Specify a negative number to disable a device decoding protocol (can be used multiple times)\n",
+            "  [-R <cihaz> | help] Sadece belirtilen cihaz kod çözme protokolünü etkinleştir (birden fazla kez kullanılabilir)\n"
+            "       Bir cihaz kod çözme protokolünü devre dışı bırakmak için negatif sayı belirtin (birden fazla kez kullanılabilir)\n")
+            I18N("  [-X <spec> | help] Add a general purpose decoder (prepend -R 0 to disable all decoders)\n",
+            "  [-X <spec> | help] Genel amaçlı bir kod çözücü ekleyin (tüm kod çözücüleri devre dışı bırakmak için -R 0 ekleyin)\n")
+            I18N("  [-Y auto | classic | minmax] FSK pulse detector mode.\n", "  [-Y auto | classic | minmax] FSK darbe algılama modu.\n")
+            I18N("  [-Y level=<dB level>] Manual detection level used to determine pulses (-1.0 to -30.0) (0=auto).\n",
+            "  [-Y level=<dB seviyesi>] Darbeleri belirlemek için manuel algılama seviyesi (-1.0 ile -30.0 arası, 0=oto).\n")
+            I18N("  [-Y minlevel=<dB level>] Manual minimum detection level used to determine pulses (-1.0 to -99.0).\n",
+            "  [-Y minlevel=<dB seviyesi>] Darbeleri belirlemek için manuel minimum algılama seviyesi (-1.0 ile -99.0 arası).\n")
+            I18N("  [-Y minsnr=<dB level>] Minimum SNR to determine pulses (1.0 to 99.0).\n",
+            "  [-Y minsnr=<dB seviyesi>] Darbeleri belirlemek için minimum SNR (1.0 ile 99.0 arası).\n")
+            I18N("  [-Y autolevel] Set minlevel automatically based on average estimated noise.\n",
+            "  [-Y autolevel] Minimum seviyayı tahmini ortalama gürültüye göre otomatik ayarla.\n")
+            I18N("  [-Y squelch] Skip frames below estimated noise level to reduce cpu load.\n",
+            "  [-Y squelch] CPU yükünü azaltmak için tahmini gürültü seviyesinin altındaki çerçeveleri atla.\n")
+            I18N("  [-Y ampest | magest] Choose amplitude or magnitude level estimator.\n",
+            "  [-Y ampest | magest] Genlik veya magnitüd seviyesi tahmin edicisi seçin.\n")
+            I18N("\t\t= Analyze/Debug options =\n", "\t\t= Analiz/Hata ayıklama seçenekleri =\n")
+            I18N("  [-A] Pulse Analyzer. Enable pulse analysis and decode attempt.\n"
+            "       Disable all decoders with -R 0 if you want analyzer output only.\n",
+            "  [-A] Darbe Analizi. Darbe analizini ve kod çözme denemesini etkinleştir.\n"
+            "       Sadece analizör çıktısını istiyorsanız tüm kod çözücüleri -R 0 ile devre dışı bırakın.\n")
+            I18N("  [-y <code>] Verify decoding of demodulated test data (e.g. \"{25}fb2dd58\") with enabled devices\n",
+            "  [-y <kod>] Etkin cihazlarla demodüle edilmiş test verilerinin kod çözülmesini doğrulayın (örn. \"{25}fb2dd58\")\n")
+            I18N("\t\t= File I/O options =\n", "\t\t= Dosya G/Ç seçenekleri =\n")
+            I18N("  [-S none | all | unknown | known] Signal auto save. Creates one file per signal.\n"
+            "       Note: Saves raw I/Q samples (uint8 pcm, 2 channel). Preferred mode for generating test files.\n",
+            "  [-S none | all | unknown | known] Sinyil otomatik kaydet. Her sinyal için bir dosya oluşturur.\n"
+            "       Not: Ham I/Q örneklerini kaydeder (uint8 pcm, 2 kanal). Test dosyası oluşturma için tercih edilen mod.\n")
+            I18N("  [-r <filename> | help] Read data from input file instead of a receiver\n",
+            "  [-r <dosya adı> | help] Verileri bir alıcı yerine giriş dosyasından oku\n")
+            I18N("  [-w <filename> | help] Save data stream to output file (a '-' dumps samples to stdout)\n",
+            "  [-w <dosya adı> | help] Veri akışını çıktı dosyasına kaydet ('-' örnekleri stdout'a döker)\n")
+            I18N("  [-W <filename> | help] Save data stream to output file, overwrite existing file\n",
+            "  [-W <dosya adı> | help] Veri akışını çıktı dosyasına kaydet, mevcut dosyanın üzerine yaz\n")
+            I18N("\t\t= Data output options =\n", "\t\t= Veri çıktı seçenekleri =\n")
+            I18N("  [-F log | kv | json | csv | mqtt | influx | syslog | trigger | rtl_tcp | http | null | help] Produce decoded output in given format.\n"
             "       Append output to file with :<filename> (e.g. -F csv:log.csv), defaults to stdout.\n"
-            "       Specify host/port for syslog with e.g. -F syslog:127.0.0.1:1514\n"
-            "  [-M time[:<options>] | protocol | level | noise[:<secs>] | stats | bits | help] Add various meta data to each output.\n"
-            "  [-K FILE | PATH | <tag> | <key>=<tag>] Add an expanded token or fixed tag to every output line.\n"
-            "  [-C native | si | customary] Convert units in decoded output.\n"
-            "  [-n <value>] Specify number of samples to take (each sample is an I/Q pair)\n"
-            "  [-T <seconds>] Specify number of seconds to run, also 12:34 or 1h23m45s\n"
-            "  [-E hop | quit] Hop/Quit after outputting successful event(s)\n"
-            "  [-h] Output this usage help and exit\n"
-            "       Use -d, -g, -R, -X, -F, -M, -r, -w, or -W without argument for more help\n\n",
+            "       Specify host/port for syslog with e.g. -F syslog:127.0.0.1:1514\n",
+            "  [-F log | kv | json | csv | mqtt | influx | syslog | trigger | rtl_tcp | http | null | help] Kodu çözülmüş çıktıyı verilen formatta üret.\n"
+            "       Çıktıyı dosyaya eklemek için :<dosya adı> kullanın (örn. -F csv:log.csv), varsayılan stdout.\n"
+            "       Syslog için ana bilgisayar/bağlantı noktası örn. -F syslog:127.0.0.1:1514 ile belirtin\n")
+            I18N("  [-M time[:<options>] | protocol | level | noise[:<secs>] | stats | bits | help] Add various meta data to each output.\n",
+            "  [-M time[:<seçenekler>] | protocol | level | noise[:<sn>] | stats | bits | help] Her çıktıya çeşitli meta veriler ekleyin.\n")
+            I18N("  [-K FILE | PATH | <tag> | <key>=<tag>] Add an expanded token or fixed tag to every output line.\n",
+            "  [-K FILE | PATH | <etiket> | <anahtar>=<etiket>] Her çıktı satırına genişletilmiş bir jeton veya sabit etiket ekleyin.\n")
+            I18N("  [-C native | si | customary] Convert units in decoded output.\n",
+            "  [-C native | si | customary] Kodu çözülmüş çıktıda birimleri dönüştür.\n")
+            I18N("  [-n <value>] Specify number of samples to take (each sample is an I/Q pair)\n",
+            "  [-n <değer>] Alınacak örnek sayısını belirtin (her örnek bir I/Q çiftidir)\n")
+            I18N("  [-T <seconds>] Specify number of seconds to run, also 12:34 or 1h23m45s\n",
+            "  [-T <saniye>] Çalıştırılacak saniye sayısını belirtin, ayrıca 12:34 veya 1h23m45s formatında\n")
+            I18N("  [-E hop | quit] Hop/Quit after outputting successful event(s)\n",
+            "  [-E hop | quit] Başarılı olay(ları) çıkardıktan sonra Atlama/Çıkış\n")
+            I18N("  [-h] Output this usage help and exit\n",
+            "  [-h] Bu kullanım yardımını yazdır ve çık\n")
+            I18N("       Use -d, -g, -R, -X, -F, -M, -r, -w, or -W without argument for more help\n\n",
+            "       Daha fazla yardım için -d, -g, -R, -X, -F, -M, -r, -w veya -W'yi argüman olmadan kullanın\n\n"),
             DEFAULT_FREQUENCY, DEFAULT_HOP_TIME, DEFAULT_SAMPLE_RATE);
     exit(exit_code);
 }
@@ -206,13 +250,14 @@ static void help_protocols(r_device *devices, unsigned num_devices, int exit_cod
     if (devices) {
         FILE *fp = exit_code ? stderr : stdout;
         term_help_fprintf(fp,
-                "\t\t= Supported device protocols =\n");
+                I18N("\t\t= Supported device protocols =\n", "\t\t= Desteklenen cihaz protokolleri =\n"));
         for (i = 0; i < num_devices; i++) {
             disabledc = devices[i].disabled ? '*' : ' ';
             if (devices[i].disabled <= 2) // if not hidden
                 fprintf(fp, "    [%02u]%c %s\n", i + 1, disabledc, devices[i].name);
         }
-        fprintf(fp, "\n* Disabled by default, use -R n or a conf file to enable\n");
+        fprintf(fp, I18N("\n* Disabled by default, use -R n or a conf file to enable\n",
+                        "\n* Varsayılan olarak devre dışı, etkinleştirmek için -R n veya bir yapılandırma dosyası kullanın\n"));
     }
     exit(exit_code);
 }
@@ -247,11 +292,14 @@ _Noreturn
 static void help_gain(void)
 {
     term_help_fprintf(stdout,
-            "\t\t= Gain option =\n"
-            "  [-g <gain>] (default: auto)\n"
-            "\tFor RTL-SDR: gain in dB (\"0\" is auto).\n"
-            "\tFor SoapySDR: gain in dB for automatic distribution (\"\" is auto), or string of gain elements.\n"
-            "\tE.g. \"LNA=20,TIA=8,PGA=2\" for LimeSDR.\n");
+            I18N("\t\t= Gain option =\n", "\t\t= Gain seçeneği =\n")
+            I18N("  [-g <gain>] (default: auto)\n", "  [-g <gain>] (varsayılan: auto)\n")
+            I18N("\tFor RTL-SDR: gain in dB (\"0\" is auto).\n",
+                 "\tRTL-SDR için: dB cinsinden gain (\"0\" otomatiktir).\n")
+            I18N("\tFor SoapySDR: gain in dB for automatic distribution (\"\" is auto), or string of gain elements.\n",
+                 "\tSoapySDR için: otomatik dağıtım için dB cinsinden gain (\"\" otomatiktir) veya gain elemanları dizisi.\n")
+            I18N("\tE.g. \"LNA=20,TIA=8,PGA=2\" for LimeSDR.\n",
+                 "\tÖrn. LimeSDR için \"LNA=20,TIA=8,PGA=2\".\n"));
     exit(0);
 }
 
@@ -259,14 +307,21 @@ _Noreturn
 static void help_device_mode(void)
 {
     term_help_fprintf(stdout,
-            "\t\t= Input device run mode =\n"
-            "  [-D quit | restart | pause | manual] Input device run mode options (default: quit).\n"
-            "\tSupported input device run modes:\n"
-            "\t  quit: Quit on input device errors (default)\n"
-            "\t  restart: Restart the input device on errors\n"
-            "\t  pause: Pause the input device on errors, waits for e.g. HTTP-API control\n"
-            "\t  manual: Do not start an input device, waits for e.g. HTTP-API control\n"
-            "\tWithout this option the default is to start the SDR and quit on errors.\n");
+            I18N("\t\t= Input device run mode =\n", "\t\t= Giriş cihazı çalıştırma modu =\n")
+            I18N("  [-D quit | restart | pause | manual] Input device run mode options (default: quit).\n",
+                 "  [-D quit | restart | pause | manual] Giriş cihazı çalıştırma modu seçenekleri (varsayılan: quit).\n")
+            I18N("\tSupported input device run modes:\n",
+                 "\tDesteklenen giriş cihazı çalıştırma modları:\n")
+            I18N("\t  quit: Quit on input device errors (default)\n",
+                 "\t  quit: Giriş cihazı hatalarında çıkış yapar (varsayılan)\n")
+            I18N("\t  restart: Restart the input device on errors\n",
+                 "\t  restart: Hatalarda giriş cihazını yeniden başlatır\n")
+            I18N("\t  pause: Pause the input device on errors, waits for e.g. HTTP-API control\n",
+                 "\t  pause: Hatalarda giriş cihazını duraklatır, örn. HTTP-API kontrolünü bekler\n")
+            I18N("\t  manual: Do not start an input device, waits for e.g. HTTP-API control\n",
+                 "\t  manual: Bir giriş cihazını başlatmaz, örn. HTTP-API kontrolünü bekler\n")
+            I18N("\tWithout this option the default is to start the SDR and quit on errors.\n",
+                 "\tBu seçenek olmadan varsayılan davranış SDR'yi başlatmak ve hatalarda çıkış yapmaktır.\n"));
     exit(0);
 }
 
@@ -887,7 +942,7 @@ static void parse_conf_try_default_files(r_cfg_t *cfg)
     for (int a = 0; paths[a]; a++) {
         // fprintf(stderr, "Trying conf file at \"%s\"...\n", paths[a]);
         if (hasconf(paths[a])) {
-            fprintf(stderr, "Reading conf from \"%s\".\n", paths[a]);
+            fprintf(stderr, I18N("Reading conf from \"%s\".\n", "Yapılandırma \"%s\" konumundan okunuyor.\n"), paths[a]);
             parse_conf_file(cfg, paths[a]);
             break;
         }
@@ -954,14 +1009,15 @@ static void parse_conf_option(r_cfg_t *cfg, int opt, char *arg)
             cfg->dev_mode = DEVICE_MODE_MANUAL;
         }
         else {
-            fprintf(stderr, "Invalid input device run mode: %s\n", arg);
+            fprintf(stderr, I18N("Invalid input device run mode: %s\n", "Geçersiz giriş cihazı çalıştırma modu: %s\n"), arg);
             help_device_mode();
         }
         break;
     case 't':
         // this option changed, check and warn if old meaning is used
         if (!arg || *arg == '-') {
-            fprintf(stderr, "test_mode (-t) is deprecated. Use -S none|all|unknown|known\n");
+            fprintf(stderr, I18N("test_mode (-t) is deprecated. Use -S none|all|unknown|known\n",
+                                 "test_mode (-t) kullanımdan kaldırıldı. -S none|all|unknown|known kullanın\n"));
             exit(1);
         }
         cfg->settings_str = arg;
@@ -972,17 +1028,18 @@ static void parse_conf_option(r_cfg_t *cfg, int opt, char *arg)
             /* If the frequency is above 800MHz sample at 1MS/s */
             if ((sr > FSK_PULSE_DETECTOR_LIMIT) && (cfg->samp_rate == DEFAULT_SAMPLE_RATE)) {
                 cfg->samp_rate = 1000000;
-                fprintf(stderr, "\nNew defaults active, use \"-Y classic -s 250k\" if you need the old defaults\n\n");
+                fprintf(stderr, I18N("\nNew defaults active, use \"-Y classic -s 250k\" if you need the old defaults\n\n",
+                                     "\nYeni varsayılanlar aktif, eski varsayılanlara ihtiyacınız varsa \"-Y classic -s 250k\" kullanın\n\n"));
             }
             cfg->frequency[cfg->frequencies++] = sr;
         } else
-            fprintf(stderr, "Max number of frequencies reached %d\n", MAX_FREQS);
+            fprintf(stderr, I18N("Max number of frequencies reached %d\n", "Maksimum frekans sayısına ulaşıldı %d\n"), MAX_FREQS);
         break;
     case 'H':
         if (cfg->hop_times < MAX_FREQS)
             cfg->hop_time[cfg->hop_times++] = atoi_time(arg, "-H: ");
         else
-            fprintf(stderr, "Max number of hop times reached %d\n", MAX_FREQS);
+            fprintf(stderr, I18N("Max number of hop times reached %d\n", "Maksimum atlama süresi sayısına ulaşıldı %d\n"), MAX_FREQS);
         break;
     case 'g':
         if (!arg)
@@ -991,10 +1048,11 @@ static void parse_conf_option(r_cfg_t *cfg, int opt, char *arg)
         free(cfg->gain_str);
         cfg->gain_str = strdup(arg);
         if (!cfg->gain_str)
-            FATAL_STRDUP("parse_conf_option()");
+            FATAL_STRDUP(I18N("parse_conf_option()", "parse_conf_option()"));
         break;
     case 'G':
-        fprintf(stderr, "register_all (-G) is deprecated. Use -R or a config file to enable additional protocols.\n");
+        fprintf(stderr, I18N("register_all (-G) is deprecated. Use -R or a config file to enable additional protocols.\n",
+                             "register_all (-G) kullanımdan kaldırıldı. Ek protokolleri etkinleştirmek için -R veya bir yapılandırma dosyası kullanın.\n"));
         exit(1);
         break;
     case 'p':
@@ -1010,7 +1068,8 @@ static void parse_conf_option(r_cfg_t *cfg, int opt, char *arg)
         n = 1000;
         if (arg && atoi(arg) > 0)
             n = atoi(arg);
-        fprintf(stderr, "\n\tLevel limit has changed from \"-l %d\" to \"-Y level=%.1f\" in dB.\n\n", n, AMP_TO_DB(n));
+        fprintf(stderr, I18N("\n\tLevel limit has changed from \"-l %d\" to \"-Y level=%.1f\" in dB.\n\n",
+                                "\n\tSeviye sınırı \"-l %d\" yerine \"-Y level=%.1f\" olarak dB cinsinden değiştirildi.\n\n"), n, AMP_TO_DB(n));
         exit(1);
         break;
     case 'n':
@@ -1021,7 +1080,8 @@ static void parse_conf_option(r_cfg_t *cfg, int opt, char *arg)
             cfg->demod->am_analyze = am_analyze_create();
         }
         else {
-            fprintf(stderr, "\n\tUse -a for testing only. Enable if you know how ;)\n\n");
+            fprintf(stderr, I18N("\n\tUse -a for testing only. Enable if you know how ;)\n\n",
+                                 "\n\t-a sadece test için kullanılır. Nasıl kullanacağınızı biliyorsanız etkinleştirin ;)\n\n"));
             exit(1);
         }
         break;
@@ -1029,7 +1089,8 @@ static void parse_conf_option(r_cfg_t *cfg, int opt, char *arg)
         cfg->demod->analyze_pulses = atobv(arg, 1);
         break;
     case 'I':
-        fprintf(stderr, "include_only (-I) is deprecated. Use -S none|all|unknown|known\n");
+        fprintf(stderr, I18N("include_only (-I) is deprecated. Use -S none|all|unknown|known\n",
+                             "include_only (-I) kullanımdan kaldırıldı. -S none|all|unknown|known kullanın\n"));
         exit(1);
         break;
     case 'r':
@@ -1066,7 +1127,7 @@ static void parse_conf_option(r_cfg_t *cfg, int opt, char *arg)
             cfg->demod->samp_grab = samp_grab_create(SIGNAL_GRABBER_BUFFER);
         break;
     case 'm':
-        fprintf(stderr, "sample mode option is deprecated.\n");
+        fprintf(stderr, I18N("sample mode option is deprecated.\n", "sample mode seçeneği kullanımdan kaldırıldı.\n"));
         usage(1);
         break;
     case 'M':
@@ -1179,11 +1240,13 @@ static void parse_conf_option(r_cfg_t *cfg, int opt, char *arg)
 
         n = atoi(arg);
         if (n > cfg->num_r_devices || -n > cfg->num_r_devices) {
-            fprintf(stderr, "Protocol number specified (%d) is larger than number of protocols\n\n", n);
+            fprintf(stderr, I18N("Protocol number specified (%d) is larger than number of protocols\n\n",
+                                 "Belirtilen protokol numarası (%d) protokol sayısından daha büyük\n\n"), n);
             help_protocols(cfg->devices, cfg->num_r_devices, 1);
         }
         if ((n > 0 && cfg->devices[n - 1].disabled > 2) || (n < 0 && cfg->devices[-n - 1].disabled > 2)) {
-            fprintf(stderr, "Protocol number specified (%d) is invalid\n\n", n);
+            fprintf(stderr, I18N("Protocol number specified (%d) is invalid\n\n",
+                                 "Belirtilen protokol numarası (%d) geçersiz\n\n"), n);
             help_protocols(cfg->devices, cfg->num_r_devices, 1);
         }
 
@@ -1199,7 +1262,7 @@ static void parse_conf_option(r_cfg_t *cfg, int opt, char *arg)
             unregister_protocol(cfg, &cfg->devices[-n - 1]);
         }
         else {
-            fprintf(stderr, "Disabling all device decoders.\n");
+            fprintf(stderr, I18N("Disabling all device decoders.\n", "Tüm cihaz kod çözücülerini devre dışı bırakma.\n"));
             list_clear(&cfg->demod->r_devs, (list_elem_free_fn)free_protocol);
         }
         break;
@@ -1211,7 +1274,8 @@ static void parse_conf_option(r_cfg_t *cfg, int opt, char *arg)
         register_protocol(cfg, flex_device, "");
         break;
     case 'q':
-        fprintf(stderr, "quiet option (-q) is default and deprecated. See -v to increase verbosity\n");
+        fprintf(stderr, I18N("quiet option (-q) is default and deprecated. See -v to increase verbosity\n",
+                             "quiet seçeneği (-q) varsayılan ve kullanımdan kaldırıldı. Ayrıntı seviyesini artırmak için -v kullanın\n"));
         break;
     case 'F':
         if (!arg)
